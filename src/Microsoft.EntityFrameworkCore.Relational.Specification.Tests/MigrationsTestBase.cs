@@ -235,13 +235,9 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
             buildMigration(migrationBuilder);
             var operations = migrationBuilder.Operations.ToList();
 
-            var commands = generator.Generate(operations, model: null);
+            var commandList = generator.Generate(operations, model: null);
 
-            using (var transaction = await connection.BeginTransactionAsync())
-            {
-                await commands.ExecuteNonQueryAsync(connection);
-                transaction.Commit();
-            }
+            await commandList.ExecuteNonQueryAsync(connection);
         }
 
         protected virtual void BuildFirstMigration(MigrationBuilder migrationBuilder)

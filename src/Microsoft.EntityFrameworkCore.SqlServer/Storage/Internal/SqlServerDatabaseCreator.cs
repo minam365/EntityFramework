@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +67,7 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
             => _rawSqlCommandBuilder
                 .Build("IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE') SELECT 1 ELSE SELECT 0");
 
-        private IEnumerable<IRelationalCommand> CreateCreateOperations()
+        private MigrationCommandList CreateCreateOperations()
             => _migrationsSqlGenerator.Generate(new[] { new SqlServerCreateDatabaseOperation { Name = _connection.DbConnection.Database } });
 
         public override bool Exists()
@@ -181,7 +180,7 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
             }
         }
 
-        private IEnumerable<IRelationalCommand> CreateDropCommands()
+        private MigrationCommandList CreateDropCommands()
         {
             var operations = new MigrationOperation[]
             {

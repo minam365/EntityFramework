@@ -1,13 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Microsoft.EntityFrameworkCore.Storage
@@ -69,30 +67,12 @@ namespace Microsoft.EntityFrameworkCore.Storage
         }
 
         public virtual void CreateTables()
-        {
-            var commands = GetCreateTablesCommands();
-
-            using (var transaction = Connection.BeginTransaction())
-            {
-                commands.ExecuteNonQuery(Connection);
-
-                transaction.Commit();
-            }
-        }
+            => GetCreateTablesCommands().ExecuteNonQuery(Connection);
 
         public virtual async Task CreateTablesAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var commands = GetCreateTablesCommands();
+            => await GetCreateTablesCommands().ExecuteNonQueryAsync(Connection, cancellationToken);
 
-            using (var transaction = await Connection.BeginTransactionAsync(cancellationToken))
-            {
-                await commands.ExecuteNonQueryAsync(Connection, cancellationToken);
-
-                transaction.Commit();
-            }
-        }
-
-        protected virtual IEnumerable<IRelationalCommand> GetCreateTablesCommands()
+        protected virtual MigrationCommandList GetCreateTablesCommands()
             => _migrationsSqlGenerator.Generate(_modelDiffer.GetDifferences(null, Model), Model);
 
         protected abstract bool HasTables();
