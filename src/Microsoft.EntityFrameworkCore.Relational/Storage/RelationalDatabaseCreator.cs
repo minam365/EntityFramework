@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -19,21 +20,26 @@ namespace Microsoft.EntityFrameworkCore.Storage
             [NotNull] IModel model,
             [NotNull] IRelationalConnection connection,
             [NotNull] IMigrationsModelDiffer modelDiffer,
-            [NotNull] IMigrationsSqlGenerator migrationsSqlGenerator)
+            [NotNull] IMigrationsSqlGenerator migrationsSqlGenerator,
+            [NotNull] IMigrationCommandExecutor migrationCommandExecutor)
         {
             Check.NotNull(model, nameof(model));
             Check.NotNull(connection, nameof(connection));
             Check.NotNull(modelDiffer, nameof(modelDiffer));
             Check.NotNull(migrationsSqlGenerator, nameof(migrationsSqlGenerator));
+            Check.NotNull(migrationCommandExecutor, nameof(migrationCommandExecutor));
 
             Model = model;
             Connection = connection;
             _modelDiffer = modelDiffer;
             _migrationsSqlGenerator = migrationsSqlGenerator;
+            MigrationCommandExecutor = migrationCommandExecutor;
         }
 
         protected virtual IModel Model { get; }
         protected virtual IRelationalConnection Connection { get; }
+
+        protected virtual IMigrationCommandExecutor MigrationCommandExecutor { get; }
 
         public abstract bool Exists();
 
@@ -67,12 +73,12 @@ namespace Microsoft.EntityFrameworkCore.Storage
         }
 
         public virtual void CreateTables()
-            => GetCreateTablesCommands().ExecuteNonQuery(Connection);
+            => MigrationCommandExecutor.ExecuteNonQuery(GetCreateTablesCommands(), Connection);
 
         public virtual async Task CreateTablesAsync(CancellationToken cancellationToken = default(CancellationToken))
-            => await GetCreateTablesCommands().ExecuteNonQueryAsync(Connection, cancellationToken);
+            => await MigrationCommandExecutor.ExecuteNonQueryAsync(GetCreateTablesCommands(), Connection, cancellationToken);
 
-        protected virtual MigrationCommandList GetCreateTablesCommands()
+        protected virtual IReadOnlyList<MigrationCommand> GetCreateTablesCommands()
             => _migrationsSqlGenerator.Generate(_modelDiffer.GetDifferences(null, Model), Model);
 
         protected abstract bool HasTables();

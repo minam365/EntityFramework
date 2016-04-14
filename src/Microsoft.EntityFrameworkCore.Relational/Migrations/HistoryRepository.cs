@@ -109,7 +109,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             var operations = _modelDiffer.GetDifferences(null, _model.Value);
             var commandList = _migrationsSqlGenerator.Generate(operations, _model.Value);
 
-            return string.Concat(commandList.MigrationCommands.Select(c => c.RelationalCommand.CommandText));
+            return string.Concat(commandList.Select(c => c.RelationalCommand.CommandText));
         }
 
         protected virtual void ConfigureTable([NotNull] EntityTypeBuilder<HistoryRow> history)

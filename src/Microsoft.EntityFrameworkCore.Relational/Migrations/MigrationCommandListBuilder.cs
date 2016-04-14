@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             _commandBuilder = commandBuilderFactory.Create();
         }
 
-        public virtual MigrationCommandList GetCommandList() => new MigrationCommandList(_commands);
+        public virtual IReadOnlyList<MigrationCommand> GetCommandList() => _commands;
 
         public virtual MigrationCommandListBuilder EndCommand(bool suppressTransaction = false)
         {

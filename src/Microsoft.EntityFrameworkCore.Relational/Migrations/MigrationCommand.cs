@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     {
         public MigrationCommand(
             [NotNull] IRelationalCommand relationalCommand,
-            bool transactionSuppressed)
+            bool transactionSuppressed = false)
         {
             Check.NotNull(relationalCommand, nameof(relationalCommand));
 

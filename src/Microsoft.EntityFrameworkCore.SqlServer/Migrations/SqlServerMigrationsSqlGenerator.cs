@@ -259,9 +259,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .EndCommand(suppressTransaction: true)
                 .Append("IF SERVERPROPERTY('EngineEdition') <> 5 EXEC(N'ALTER DATABASE ")
                 .Append(SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                .Append(" SET READ_COMMITTED_SNAPSHOT ON')")
-                .AppendLine(SqlGenerationHelper.StatementTerminator)
-                .EndCommand(suppressTransaction: true);
+                .Append(" SET READ_COMMITTED_SNAPSHOT ON')");
+
+            EndStatement(builder, suppressTransaction:true);
         }
 
         protected virtual void Generate(
@@ -280,9 +280,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .AppendLine(SqlGenerationHelper.StatementTerminator)
                 .EndCommand(suppressTransaction: true)
                 .Append("DROP DATABASE ")
-                .Append(SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                .AppendLine(SqlGenerationHelper.StatementTerminator)
-                .EndCommand(suppressTransaction: true);
+                .Append(SqlGenerationHelper.DelimitIdentifier(operation.Name));
+
+            EndStatement(builder, suppressTransaction: true);
         }
 
         protected override void Generate(

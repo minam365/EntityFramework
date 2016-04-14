@@ -69,7 +69,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         protected virtual ISqlGenerationHelper SqlGenerationHelper { get; }
         protected virtual IRelationalTypeMapper TypeMapper { get; }
 
-        public virtual MigrationCommandList Generate(
+        public virtual IReadOnlyList<MigrationCommand> Generate(
             IReadOnlyList<MigrationOperation> operations,
             IModel model = null)
         {
@@ -498,7 +498,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 
             builder.Append(operation.Sql);
 
-            EndStatement(builder);
+            EndStatement(builder, operation.SuppressTransaction);
         }
 
         protected virtual void SequenceOptions(
@@ -798,13 +798,15 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             => FindEntityType(model, schema, tableName)
                 ?.GetProperties().FirstOrDefault(p => _annotations.For(p).ColumnName == columnName);
 
-        protected virtual void EndStatement([NotNull] MigrationCommandListBuilder builder)
+        protected virtual void EndStatement(
+            [NotNull] MigrationCommandListBuilder builder,
+            bool suppressTransaction = false)
         {
             Check.NotNull(builder, nameof(builder));
 
             builder
                 .AppendLine(SqlGenerationHelper.StatementTerminator)
-                .EndCommand();
+                .EndCommand(suppressTransaction);
         }
 
         private string ColumnList(string[] columns) => string.Join(", ", columns.Select(SqlGenerationHelper.DelimitIdentifier));

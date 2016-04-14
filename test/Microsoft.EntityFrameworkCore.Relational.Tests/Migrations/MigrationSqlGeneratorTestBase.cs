@@ -418,7 +418,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
 
             Sql = string.Join(
                 "GO" + EOL + EOL,
-                batch.MigrationCommands.Select(b => b.RelationalCommand.CommandText));
+                batch.Select(b => b.RelationalCommand.CommandText));
         }
     }
 }

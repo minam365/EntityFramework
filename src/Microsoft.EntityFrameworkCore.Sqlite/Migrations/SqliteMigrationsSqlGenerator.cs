@@ -26,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         {
         }
 
-        public override MigrationCommandList Generate(IReadOnlyList<MigrationOperation> operations, IModel model = null)
+        public override IReadOnlyList<MigrationCommand> Generate(IReadOnlyList<MigrationOperation> operations, IModel model = null)
             => base.Generate(LiftForeignKeyOperations(operations), model);
 
         private static IReadOnlyList<MigrationOperation> LiftForeignKeyOperations(IReadOnlyList<MigrationOperation> migrationOperations)

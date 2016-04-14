@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.EntityFrameworkCore.Relational.Tests.TestUtilities;
 using Microsoft.EntityFrameworkCore.Relational.Tests.TestUtilities.FakeProvider;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -15,7 +16,7 @@ using Xunit;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
 {
-    public class MigrationCommandListTest
+    public class MigrationCommandExecutorTest
     {
         [Theory]
         [InlineData(false)]
@@ -24,20 +25,21 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
         {
             var fakeConnection = CreateConnection();
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: false),
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: false)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand()),
+                new MigrationCommand(CreateRelationalCommand())
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
-                await commandList.ExecuteNonQueryAsync(fakeConnection);
+                await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection);
             }
             else
             {
-                commandList.ExecuteNonQuery(fakeConnection);
+                migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection);
             }
 
             Assert.Equal(1, fakeConnection.DbConnections.Count);
@@ -64,20 +66,21 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
         {
             var fakeConnection = CreateConnection();
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true),
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true),
+                new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true)
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
-                await commandList.ExecuteNonQueryAsync(fakeConnection);
+                await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection);
             }
             else
             {
-                commandList.ExecuteNonQuery(fakeConnection);
+                migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection);
             }
 
             Assert.Equal(1, fakeConnection.DbConnections.Count);
@@ -98,20 +101,21 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
         {
             var fakeConnection = CreateConnection();
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: false),
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand()),
+                new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true)
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
-                await commandList.ExecuteNonQueryAsync(fakeConnection);
+                await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection);
             }
             else
             {
-                commandList.ExecuteNonQuery(fakeConnection);
+                migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection);
             }
 
             Assert.Equal(1, fakeConnection.DbConnections.Count);
@@ -137,20 +141,21 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
         {
             var fakeConnection = CreateConnection();
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true),
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: false)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: true),
+                new MigrationCommand(CreateRelationalCommand())
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
-                await commandList.ExecuteNonQueryAsync(fakeConnection);
+                await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection);
             }
             else
             {
-                commandList.ExecuteNonQuery(fakeConnection);
+                migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection);
             }
 
             Assert.Equal(1, fakeConnection.DbConnections.Count);
@@ -176,21 +181,22 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
         {
             var fakeConnection = CreateConnection();
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(commandText: "First"), transactionSuppressed: false),
-                    new MigrationCommand(CreateRelationalCommand(commandText: "Second"), transactionSuppressed: true),
-                    new MigrationCommand(CreateRelationalCommand(commandText: "Third"), transactionSuppressed: false)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand(commandText: "First")),
+                new MigrationCommand(CreateRelationalCommand(commandText: "Second"), transactionSuppressed: true),
+                new MigrationCommand(CreateRelationalCommand(commandText: "Third"))
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
-                await commandList.ExecuteNonQueryAsync(fakeConnection);
+                await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection);
             }
             else
             {
-                commandList.ExecuteNonQuery(fakeConnection);
+                migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection);
             }
 
             Assert.Equal(1, fakeConnection.DbConnections.Count);
@@ -251,21 +257,22 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
                             Connection = fakeDbConnection
                         }));
 
-            var commandList = new MigrationCommandList(
-                new[]
-                {
-                    new MigrationCommand(CreateRelationalCommand(), transactionSuppressed: false)
-                });
+            var commandList = new List<MigrationCommand>
+            {
+                new MigrationCommand(CreateRelationalCommand())
+            };
+
+            var migrationCommandExecutor = new MigrationCommandExecutor();
 
             if (async)
             {
                 await Assert.ThrowsAsync<InvalidOperationException>(async ()
-                    => await commandList.ExecuteNonQueryAsync(fakeConnection));
+                    => await migrationCommandExecutor.ExecuteNonQueryAsync(commandList, fakeConnection));
             }
             else
             {
                 Assert.Throws<InvalidOperationException>(()
-                    => commandList.ExecuteNonQuery(fakeConnection));
+                    => migrationCommandExecutor.ExecuteNonQuery(commandList, fakeConnection));
             }
 
             Assert.Equal(1, fakeDbConnection.OpenCount);

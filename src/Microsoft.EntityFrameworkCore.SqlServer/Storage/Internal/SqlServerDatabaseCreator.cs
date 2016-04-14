@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,9 +23,10 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
             [NotNull] ISqlServerConnection connection,
             [NotNull] IMigrationsModelDiffer modelDiffer,
             [NotNull] IMigrationsSqlGenerator migrationsSqlGenerator,
+            [NotNull] IMigrationCommandExecutor migrationCommandExecutor,
             [NotNull] IModel model,
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder)
-            : base(model, connection, modelDiffer, migrationsSqlGenerator)
+            : base(model, connection, modelDiffer, migrationsSqlGenerator, migrationCommandExecutor)
         {
             Check.NotNull(rawSqlCommandBuilder, nameof(rawSqlCommandBuilder));
 
@@ -37,7 +39,8 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
         {
             using (var masterConnection = _connection.CreateMasterConnection())
             {
-                CreateCreateOperations().ExecuteNonQuery(masterConnection);
+                MigrationCommandExecutor
+                    .ExecuteNonQuery(CreateCreateOperations(), masterConnection);
 
                 ClearPool();
             }
@@ -49,7 +52,8 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
         {
             using (var masterConnection = _connection.CreateMasterConnection())
             {
-                await CreateCreateOperations().ExecuteNonQueryAsync(masterConnection, cancellationToken);
+                await MigrationCommandExecutor
+                    .ExecuteNonQueryAsync(CreateCreateOperations(), masterConnection, cancellationToken);
 
                 ClearPool();
             }
@@ -67,7 +71,7 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
             => _rawSqlCommandBuilder
                 .Build("IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE') SELECT 1 ELSE SELECT 0");
 
-        private MigrationCommandList CreateCreateOperations()
+        private IReadOnlyList<MigrationCommand> CreateCreateOperations()
             => _migrationsSqlGenerator.Generate(new[] { new SqlServerCreateDatabaseOperation { Name = _connection.DbConnection.Database } });
 
         public override bool Exists()
@@ -166,7 +170,8 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
 
             using (var masterConnection = _connection.CreateMasterConnection())
             {
-                CreateDropCommands().ExecuteNonQuery(masterConnection);
+                MigrationCommandExecutor
+                    .ExecuteNonQuery(CreateDropCommands(), masterConnection);
             }
         }
 
@@ -176,11 +181,12 @@ namespace Microsoft.EntityFrameworkCore.Storage.Internal
 
             using (var masterConnection = _connection.CreateMasterConnection())
             {
-                await CreateDropCommands().ExecuteNonQueryAsync(masterConnection, cancellationToken);
+                await MigrationCommandExecutor
+                    .ExecuteNonQueryAsync(CreateDropCommands(), masterConnection, cancellationToken);
             }
         }
 
-        private MigrationCommandList CreateDropCommands()
+        private IReadOnlyList<MigrationCommand> CreateDropCommands()
         {
             var operations = new MigrationOperation[]
             {

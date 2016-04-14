@@ -22,6 +22,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
         private readonly IRelationalDatabaseCreator _databaseCreator;
         private readonly IMigrationsSqlGenerator _migrationsSqlGenerator;
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
+        private readonly IMigrationCommandExecutor _migrationCommandExecutor;
         private readonly IRelationalConnection _connection;
         private readonly ISqlGenerationHelper _sqlGenerationHelper;
         private readonly ILogger _logger;
@@ -33,6 +34,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             [NotNull] IDatabaseCreator databaseCreator,
             [NotNull] IMigrationsSqlGenerator migrationsSqlGenerator,
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder,
+            [NotNull] IMigrationCommandExecutor migrationCommandExecutor,
             [NotNull] IRelationalConnection connection,
             [NotNull] ISqlGenerationHelper sqlGenerationHelper,
             [NotNull] ILogger<Migrator> logger,
@@ -43,6 +45,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             Check.NotNull(databaseCreator, nameof(databaseCreator));
             Check.NotNull(migrationsSqlGenerator, nameof(migrationsSqlGenerator));
             Check.NotNull(rawSqlCommandBuilder, nameof(rawSqlCommandBuilder));
+            Check.NotNull(migrationCommandExecutor, nameof(migrationCommandExecutor));
             Check.NotNull(connection, nameof(connection));
             Check.NotNull(sqlGenerationHelper, nameof(sqlGenerationHelper));
             Check.NotNull(logger, nameof(logger));
@@ -53,6 +56,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             _databaseCreator = (IRelationalDatabaseCreator)databaseCreator;
             _migrationsSqlGenerator = migrationsSqlGenerator;
             _rawSqlCommandBuilder = rawSqlCommandBuilder;
+            _migrationCommandExecutor = migrationCommandExecutor;
             _connection = connection;
             _sqlGenerationHelper = sqlGenerationHelper;
             _logger = logger;
@@ -79,7 +83,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             var commandLists = GetMigrationCommandLists(_historyRepository.GetAppliedMigrations(), targetMigration);
             foreach (var commandList in commandLists)
             {
-                commandList().ExecuteNonQuery(_connection);
+                _migrationCommandExecutor.ExecuteNonQuery(commandList(), _connection);
             }
         }
 
@@ -108,11 +112,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
 
             foreach (var commandList in commandLists)
             {
-                await commandList().ExecuteNonQueryAsync(_connection, cancellationToken);
+                await _migrationCommandExecutor.ExecuteNonQueryAsync(commandList(), _connection, cancellationToken);
             }
         }
 
-        private IEnumerable<Func<MigrationCommandList>> GetMigrationCommandLists(
+        private IEnumerable<Func<IReadOnlyList<MigrationCommand>>> GetMigrationCommandLists(
             IReadOnlyList<HistoryRow> appliedMigrationEntries,
             string targetMigration = null)
         {
@@ -235,7 +239,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
 
                 _logger.LogDebug(RelationalStrings.GeneratingDown(migration.GetId()));
 
-                foreach (var command in GenerateDownSql(migration, previousMigration).MigrationCommands)
+                foreach (var command in GenerateDownSql(migration, previousMigration))
                 {
                     if (idempotent)
                     {
@@ -259,7 +263,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             {
                 _logger.LogDebug(RelationalStrings.GeneratingUp(migration.GetId()));
 
-                foreach (var command in GenerateUpSql(migration).MigrationCommands)
+                foreach (var command in GenerateUpSql(migration))
                 {
                     if (idempotent)
                     {
@@ -282,20 +286,20 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             return builder.ToString();
         }
 
-        protected virtual MigrationCommandList GenerateUpSql([NotNull] Migration migration)
+        protected virtual IReadOnlyList<MigrationCommand> GenerateUpSql([NotNull] Migration migration)
         {
             Check.NotNull(migration, nameof(migration));
 
             var insertCommand =_rawSqlCommandBuilder.Build(
                 _historyRepository.GetInsertScript(new HistoryRow(migration.GetId(), ProductInfo.GetVersion())));
 
-            return new MigrationCommandList(
-                _migrationsSqlGenerator.Generate(migration.UpOperations, migration.TargetModel)
-                    .MigrationCommands
-                    .Concat(new[] { new MigrationCommand(insertCommand, transactionSuppressed: false) }));
+            return _migrationsSqlGenerator
+                .Generate(migration.UpOperations, migration.TargetModel)
+                .Concat(new[] { new MigrationCommand(insertCommand) })
+                .ToList();
         }
 
-        protected virtual MigrationCommandList GenerateDownSql(
+        protected virtual IReadOnlyList<MigrationCommand> GenerateDownSql(
             [NotNull] Migration migration,
             [CanBeNull] Migration previousMigration)
         {
@@ -304,10 +308,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Internal
             var deleteCommand = _rawSqlCommandBuilder.Build(
                 _historyRepository.GetDeleteScript(migration.GetId()));
 
-            return new MigrationCommandList(
-                _migrationsSqlGenerator.Generate(migration.DownOperations, previousMigration?.TargetModel)
-                .MigrationCommands
-                .Concat(new[] { new MigrationCommand(deleteCommand, transactionSuppressed: false) }));
+            return _migrationsSqlGenerator
+                .Generate(migration.DownOperations, previousMigration?.TargetModel)
+                .Concat(new[] { new MigrationCommand(deleteCommand) })
+                .ToList();
         }
     }
 }

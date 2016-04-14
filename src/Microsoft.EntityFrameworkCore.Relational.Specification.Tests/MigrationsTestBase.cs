@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Storage.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -228,6 +227,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
         protected virtual async Task ExecuteAsync(IServiceProvider services, Action<MigrationBuilder> buildMigration)
         {
             var generator = services.GetRequiredService<IMigrationsSqlGenerator>();
+            var executor = services.GetRequiredService<IMigrationCommandExecutor>();
             var connection = services.GetRequiredService<IRelationalConnection>();
             var providerServices = services.GetRequiredService<IDatabaseProviderServices>();
 
@@ -237,7 +237,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
 
             var commandList = generator.Generate(operations, model: null);
 
-            await commandList.ExecuteNonQueryAsync(connection);
+            await executor.ExecuteNonQueryAsync(commandList, connection);
         }
 
         protected virtual void BuildFirstMigration(MigrationBuilder migrationBuilder)

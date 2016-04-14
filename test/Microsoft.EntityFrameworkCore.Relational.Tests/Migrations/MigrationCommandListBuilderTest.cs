@@ -25,15 +25,15 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
 
             var commandList = commandListBuilder.GetCommandList();
 
-            Assert.Equal(1, commandList.MigrationCommands.Count);
+            Assert.Equal(1, commandList.Count);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[0].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[0].TransactionSuppressed);
             Assert.Equal(
                 @"Statement1
 Statement2
 Statement3
 ",
-                commandList.MigrationCommands[0].RelationalCommand.CommandText);
+                commandList[0].RelationalCommand.CommandText);
         }
 
         [Theory]
@@ -54,28 +54,28 @@ Statement3
 
             var commandList = commandListBuilder.GetCommandList();
 
-            Assert.Equal(3, commandList.MigrationCommands.Count);
+            Assert.Equal(3, commandList.Count);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[0].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[0].TransactionSuppressed);
             Assert.Equal(
                 @"Statement1
 ",
-                commandList.MigrationCommands[0].RelationalCommand.CommandText);
+                commandList[0].RelationalCommand.CommandText);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[1].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[1].TransactionSuppressed);
             Assert.Equal(
                 @"Statement2
 Statement3
 ",
-                commandList.MigrationCommands[1].RelationalCommand.CommandText);
+                commandList[1].RelationalCommand.CommandText);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[2].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[2].TransactionSuppressed);
             Assert.Equal(
                 @"Statement4
 Statement5
 Statement6
 ",
-                commandList.MigrationCommands[2].RelationalCommand.CommandText);
+                commandList[2].RelationalCommand.CommandText);
         }
 
         [Theory]
@@ -95,20 +95,20 @@ Statement6
 
             var commandList = commandListBuilder.GetCommandList();
 
-            Assert.Equal(2, commandList.MigrationCommands.Count);
+            Assert.Equal(2, commandList.Count);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[0].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[0].TransactionSuppressed);
             Assert.Equal(
                 @"Statement1
 ",
-                commandList.MigrationCommands[0].RelationalCommand.CommandText);
+                commandList[0].RelationalCommand.CommandText);
 
-            Assert.Equal(suppressTransaction, commandList.MigrationCommands[1].TransactionSuppressed);
+            Assert.Equal(suppressTransaction, commandList[1].TransactionSuppressed);
             Assert.Equal(
                 @"Statement2
 Statement3
 ",
-                commandList.MigrationCommands[1].RelationalCommand.CommandText);
+                commandList[1].RelationalCommand.CommandText);
         }
 
         private MigrationCommandListBuilder CreateBuilder()

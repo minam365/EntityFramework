@@ -1,32 +1,21 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Migrations
+namespace Microsoft.EntityFrameworkCore.Migrations.Internal
 {
-    public class MigrationCommandList
+    public class MigrationCommandExecutor : IMigrationCommandExecutor
     {
-        private readonly List<MigrationCommand> _migrationCommands;
-
-        public MigrationCommandList([NotNull] IEnumerable<MigrationCommand> migrationCommands)
+        public virtual void ExecuteNonQuery(
+            IEnumerable<MigrationCommand> migrationCommands,
+            IRelationalConnection connection)
         {
             Check.NotNull(migrationCommands, nameof(migrationCommands));
-
-            _migrationCommands = migrationCommands.ToList();
-        }
-
-        public virtual IReadOnlyList<MigrationCommand> MigrationCommands => _migrationCommands;
-
-        public virtual void ExecuteNonQuery([NotNull] IRelationalConnection connection)
-        {
             Check.NotNull(connection, nameof(connection));
 
             connection.Open();
@@ -37,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 
                 try
                 {
-                    foreach (var command in _migrationCommands)
+                    foreach (var command in migrationCommands)
                     {
                         if (transaction == null
                             && !command.TransactionSuppressed)
@@ -70,9 +59,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         }
 
         public virtual async Task ExecuteNonQueryAsync(
-            [NotNull] IRelationalConnection connection,
+            IEnumerable<MigrationCommand> migrationCommands,
+            IRelationalConnection connection,
             CancellationToken cancellationToken = default(CancellationToken))
         {
+            Check.NotNull(migrationCommands, nameof(migrationCommands));
             Check.NotNull(connection, nameof(connection));
 
             await connection.OpenAsync(cancellationToken);
@@ -83,7 +74,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 
                 try
                 {
-                    foreach (var command in _migrationCommands)
+                    foreach (var command in migrationCommands)
                     {
                         if (transaction == null
                             && !command.TransactionSuppressed)

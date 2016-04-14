@@ -49,7 +49,7 @@
     <Compile Include="Migrations\Internal\MigrationsIdGeneratorTest.cs" />
     <Compile Include="Migrations\Internal\MigrationsModelDifferTest.cs" />
     <Compile Include="Migrations\Internal\MigrationsModelDifferTestBase.cs" />
-    <Compile Include="Migrations\MigrationCommandListTest.cs" />
+    <Compile Include="Migrations\MigrationCommandExecutorTest.cs" />
     <Compile Include="Migrations\MigrationSqlGeneratorTest.cs" />
     <Compile Include="Migrations\MigrationSqlGeneratorTestBase.cs" />
     <Compile Include="RelationalConnectionTest.cs" />

@@ -10,7 +10,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 {
     public interface IMigrationsSqlGenerator
     {
-        MigrationCommandList Generate(
+        IReadOnlyList<MigrationCommand> Generate(
             [NotNull] IReadOnlyList<MigrationOperation> operations,
             [CanBeNull] IModel model = null);
     }
